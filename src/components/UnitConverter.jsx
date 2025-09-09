@@ -1,142 +1,171 @@
-import React, { useState } from 'react';
-import { siToAtomic, atomicToSi, cgsToAtomic, atomicToCgs, UNITS, formatNumber } from '../utils/physicsConversions';
+import React, { useState, useEffect } from 'react';
+import { convertUnits, formatNumber, UNIT_CATEGORIES } from '../utils/physicsConversions';
 import './UnitConverter.css';
 
-const UnitConverter = ({ quantity }) => {
-  const [siValue, setSiValue] = useState('');
-  const [cgsValue, setCgsValue] = useState('');
-  const [atomicValue, setAtomicValue] = useState('');
+const UnitConverter = ({ category }) => {
+  const [inputValue, setInputValue] = useState('');
+  const [fromUnit, setFromUnit] = useState('');
+  const [toUnit, setToUnit] = useState('');
+  const [result, setResult] = useState('');
 
-  // Helper function to convert from atomic units to any system
-  const fromAtomic = (atomicVal, targetSystem) => {
-    if (targetSystem === 'si') return atomicToSi[quantity](atomicVal);
-    if (targetSystem === 'cgs') return atomicToCgs[quantity](atomicVal);
-    return atomicVal;
-  };
+  const categoryData = UNIT_CATEGORIES[category];
+  const units = categoryData?.units || {};
+  const unitKeys = Object.keys(units);
 
-  // Helper function to convert to atomic units from any system
-  const toAtomic = (value, sourceSystem) => {
-    if (sourceSystem === 'si') return siToAtomic[quantity](value);
-    if (sourceSystem === 'cgs') return cgsToAtomic[quantity](value);
-    return value;
-  };
+  // Set default units when category changes
+  useEffect(() => {
+    if (unitKeys.length >= 2) {
+      setFromUnit(unitKeys[0]);
+      setToUnit(unitKeys[1]);
+    }
+    setInputValue('');
+    setResult('');
+  }, [category]);
 
-  const handleValueChange = (value, changedSystem) => {
-    if (value && !isNaN(value)) {
-      const atomicVal = toAtomic(parseFloat(value), changedSystem);
-      
-      // Update all other fields
-      if (changedSystem !== 'si') {
-        setSiValue(formatNumber(fromAtomic(atomicVal, 'si')));
-      }
-      if (changedSystem !== 'cgs') {
-        setCgsValue(formatNumber(fromAtomic(atomicVal, 'cgs')));
-      }
-      if (changedSystem !== 'atomic') {
-        setAtomicValue(formatNumber(atomicVal));
+  // Perform conversion when input or units change
+  useEffect(() => {
+    if (inputValue && !isNaN(inputValue) && fromUnit && toUnit) {
+      try {
+        const converted = convertUnits(parseFloat(inputValue), fromUnit, toUnit, category);
+        setResult(formatNumber(converted));
+      } catch (error) {
+        setResult('Error');
       }
     } else {
-      // Clear all other fields if input is empty
-      if (changedSystem !== 'si') setSiValue('');
-      if (changedSystem !== 'cgs') setCgsValue('');
-      if (changedSystem !== 'atomic') setAtomicValue('');
+      setResult('');
+    }
+  }, [inputValue, fromUnit, toUnit, category]);
+
+  const handleInputChange = (e) => {
+    setInputValue(e.target.value);
+  };
+
+  const handleFromUnitChange = (e) => {
+    setFromUnit(e.target.value);
+  };
+
+  const handleToUnitChange = (e) => {
+    setToUnit(e.target.value);
+  };
+
+  const swapUnits = () => {
+    const tempUnit = fromUnit;
+    setFromUnit(toUnit);
+    setToUnit(tempUnit);
+    // Optionally swap the values too
+    if (result && !isNaN(result)) {
+      setInputValue(result);
     }
   };
 
-  const handleSiChange = (e) => {
-    const value = e.target.value;
-    setSiValue(value);
-    handleValueChange(value, 'si');
+  const clearAll = () => {
+    setInputValue('');
+    setResult('');
   };
 
-  const handleCgsChange = (e) => {
-    const value = e.target.value;
-    setCgsValue(value);
-    handleValueChange(value, 'cgs');
+  const copyResult = () => {
+    if (result && result !== 'Error') {
+      navigator.clipboard.writeText(result);
+    }
   };
-
-  const handleAtomicChange = (e) => {
-    const value = e.target.value;
-    setAtomicValue(value);
-    handleValueChange(value, 'atomic');
-  };
-
-  const clearValues = () => {
-    setSiValue('');
-    setCgsValue('');
-    setAtomicValue('');
-  };
-
-  const siUnit = UNITS[quantity].si;
-  const cgsUnit = UNITS[quantity].cgs;
-  const atomicUnit = UNITS[quantity].atomic;
 
   return (
     <div className="unit-converter">
       <div className="converter-header">
-        <h3>{quantity.charAt(0).toUpperCase() + quantity.slice(1)} Conversion</h3>
-        <p>Convert between SI, CGS, and atomic units</p>
+        <h3>{categoryData?.name || category} Conversion</h3>
+        <p>Convert between different {categoryData?.name?.toLowerCase()} units</p>
       </div>
       
-      <div className="conversion-inputs-grid">
-        <div className="input-group">
-          <label htmlFor={`si-${quantity}`}>
-            SI Unit ({siUnit.symbol})
-          </label>
-          <input
-            id={`si-${quantity}`}
-            type="number"
-            value={siValue}
-            onChange={handleSiChange}
-            placeholder={`Enter value in ${siUnit.name}`}
-            step="any"
-          />
-          <span className="unit-label">{siUnit.name}</span>
+      <div className="conversion-container">
+        <div className="conversion-row">
+          <div className="input-section">
+            <label htmlFor={`input-${category}`}>From:</label>
+            <div className="input-with-unit">
+              <input
+                id={`input-${category}`}
+                type="number"
+                value={inputValue}
+                onChange={handleInputChange}
+                placeholder="Enter value"
+                step="any"
+              />
+              <select 
+                value={fromUnit} 
+                onChange={handleFromUnitChange}
+                className="unit-select"
+              >
+                {unitKeys.map(unitKey => (
+                  <option key={unitKey} value={unitKey}>
+                    {units[unitKey].symbol} - {units[unitKey].name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          <div className="conversion-controls">
+            <button onClick={swapUnits} className="swap-button" title="Swap units">
+              ⇄
+            </button>
+          </div>
+
+          <div className="result-section">
+            <label htmlFor={`result-${category}`}>To:</label>
+            <div className="input-with-unit">
+              <input
+                id={`result-${category}`}
+                type="text"
+                value={result}
+                placeholder="Result"
+                readOnly
+                className="result-input"
+              />
+              <select 
+                value={toUnit} 
+                onChange={handleToUnitChange}
+                className="unit-select"
+              >
+                {unitKeys.map(unitKey => (
+                  <option key={unitKey} value={unitKey}>
+                    {units[unitKey].symbol} - {units[unitKey].name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
         </div>
 
-        <div className="input-group">
-          <label htmlFor={`cgs-${quantity}`}>
-            CGS Unit ({cgsUnit.symbol})
-          </label>
-          <input
-            id={`cgs-${quantity}`}
-            type="number"
-            value={cgsValue}
-            onChange={handleCgsChange}
-            placeholder={`Enter value in ${cgsUnit.name}`}
-            step="any"
-          />
-          <span className="unit-label">{cgsUnit.name}</span>
+        <div className="action-buttons">
+          <button onClick={clearAll} className="clear-button">
+            Clear
+          </button>
+          <button onClick={copyResult} className="copy-button" disabled={!result || result === 'Error'}>
+            Copy Result
+          </button>
         </div>
 
-        <div className="input-group">
-          <label htmlFor={`atomic-${quantity}`}>
-            Atomic Unit ({atomicUnit.symbol})
-          </label>
-          <input
-            id={`atomic-${quantity}`}
-            type="number"
-            value={atomicValue}
-            onChange={handleAtomicChange}
-            placeholder={`Enter value in ${atomicUnit.name}`}
-            step="any"
-          />
-          <span className="unit-label">{atomicUnit.name}</span>
-        </div>
+        {inputValue && result && result !== 'Error' && (
+          <div className="conversion-summary">
+            <p>
+              <strong>{inputValue} {units[fromUnit]?.symbol}</strong> = 
+              <strong> {result} {units[toUnit]?.symbol}</strong>
+            </p>
+          </div>
+        )}
       </div>
 
-      <div className="converter-controls">
-        <button onClick={clearValues} className="clear-button" title="Clear all">
-          Clear All
-        </button>
-      </div>
-
-      <div className="conversion-info">
-        <div className="conversion-factors">
-          <p><strong>Conversion factors:</strong></p>
-          <p>1 {siUnit.symbol} = {formatNumber(1 / (atomicToSi[quantity](1)))} {atomicUnit.symbol}</p>
-          <p>1 {cgsUnit.symbol} = {formatNumber(1 / (atomicToCgs[quantity](1)))} {atomicUnit.symbol}</p>
-        </div>
+      <div className="unit-info">
+        <details>
+          <summary>Available Units ({unitKeys.length})</summary>
+          <div className="units-grid">
+            {unitKeys.map(unitKey => (
+              <div key={unitKey} className="unit-item">
+                <span className="unit-symbol">{units[unitKey].symbol}</span>
+                <span className="unit-name">{units[unitKey].name}</span>
+              </div>
+            ))}
+          </div>
+        </details>
       </div>
     </div>
   );
