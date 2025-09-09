@@ -1,12 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { convertUnits, formatNumber, UNIT_CATEGORIES } from '../utils/physicsConversions';
+import { convertUnitsWithUncertainty, UncertaintyValue } from '../utils/uncertaintyCalculations';
 import './UnitConverter.css';
 
 const UnitConverter = ({ category }) => {
   const [inputValue, setInputValue] = useState('');
+  const [inputUncertainty, setInputUncertainty] = useState('');
   const [fromUnit, setFromUnit] = useState('');
   const [toUnit, setToUnit] = useState('');
   const [result, setResult] = useState('');
+  const [showUncertainty, setShowUncertainty] = useState(false);
 
   const categoryData = UNIT_CATEGORIES[category];
   const units = categoryData?.units || {};
@@ -26,15 +29,36 @@ const UnitConverter = ({ category }) => {
   useEffect(() => {
     if (inputValue && !isNaN(inputValue) && fromUnit && toUnit) {
       try {
-        const converted = convertUnits(parseFloat(inputValue), fromUnit, toUnit, category);
-        setResult(formatNumber(converted));
+        const numValue = parseFloat(inputValue);
+        
+        if (showUncertainty && inputUncertainty && !isNaN(inputUncertainty)) {
+          const numUncertainty = parseFloat(inputUncertainty);
+          const resultWithUncertainty = convertUnitsWithUncertainty(
+            numValue, 
+            numUncertainty,
+            fromUnit, 
+            toUnit, 
+            category
+          );
+          
+          if (resultWithUncertainty) {
+            setResult(resultWithUncertainty.toString());
+          } else {
+            setResult('Conversion not available');
+          }
+        } else {
+          // Standard conversion without uncertainty
+          const converted = convertUnits(numValue, fromUnit, toUnit, category);
+          setResult(formatNumber(converted));
+        }
       } catch (error) {
-        setResult('Error');
+        console.error('Conversion error:', error);
+        setResult(`Error: ${error.message}`);
       }
     } else {
       setResult('');
     }
-  }, [inputValue, fromUnit, toUnit, category]);
+  }, [inputValue, inputUncertainty, fromUnit, toUnit, category, showUncertainty]);
 
   const handleInputChange = (e) => {
     setInputValue(e.target.value);
@@ -60,6 +84,7 @@ const UnitConverter = ({ category }) => {
 
   const clearAll = () => {
     setInputValue('');
+    setInputUncertainty('');
     setResult('');
   };
 
@@ -77,6 +102,32 @@ const UnitConverter = ({ category }) => {
       </div>
       
       <div className="conversion-container">
+        <div className="uncertainty-controls">
+          <label className="uncertainty-toggle">
+            <input
+              type="checkbox"
+              checked={showUncertainty}
+              onChange={(e) => setShowUncertainty(e.target.checked)}
+            />
+            Include uncertainty/error propagation
+          </label>
+          
+          {showUncertainty && (
+            <div className="uncertainty-input">
+              <label htmlFor={`uncertainty-${category}`}>Uncertainty (±):</label>
+              <input
+                id={`uncertainty-${category}`}
+                type="number"
+                value={inputUncertainty}
+                onChange={(e) => setInputUncertainty(e.target.value)}
+                placeholder="Enter uncertainty"
+                step="any"
+                min="0"
+              />
+            </div>
+          )}
+        </div>
+
         <div className="conversion-row">
           <div className="input-section">
             <label htmlFor={`input-${category}`}>From:</label>

@@ -1,10 +1,13 @@
 import React, { useState, useEffect, useMemo } from 'react'
 import { getCategories, UNIT_CATEGORIES, convertUnits, formatNumber } from '../utils/physicsConversions'
+import { convertUnitsWithUncertainty, UncertaintyValue } from '../utils/uncertaintyCalculations'
 import { Link } from 'react-router-dom'
 
 function TargetSystemConverter({ targetSystem, systemInfo }) {
   const [selectedCategory, setSelectedCategory] = useState('length')
   const [inputValue, setInputValue] = useState('1')
+  const [inputUncertainty, setInputUncertainty] = useState('')
+  const [showUncertainty, setShowUncertainty] = useState(false)
   const [fromUnit, setFromUnit] = useState('')
   const [conversions, setConversions] = useState([])
   
@@ -102,23 +105,57 @@ function TargetSystemConverter({ targetSystem, systemInfo }) {
     const value = parseFloat(inputValue)
     
     try {
-      const newConversions = targetUnits.map(([unitKey, unitData]) => {
-        const convertedValue = convertUnits(value, fromUnit, unitKey, selectedCategory)
-        return {
-          unit: unitKey,
-          symbol: unitData.symbol,
-          name: unitData.name,
-          value: convertedValue,
-          formatted: formatNumber(convertedValue)
-        }
-      })
-      
-      setConversions(newConversions)
+      if (showUncertainty && inputUncertainty && !isNaN(inputUncertainty)) {
+        const numUncertainty = parseFloat(inputUncertainty)
+        
+        const newConversions = targetUnits.map(([unitKey, unitData]) => {
+          const resultWithUncertainty = convertUnitsWithUncertainty(
+            value, 
+            numUncertainty,
+            fromUnit, 
+            unitKey, 
+            selectedCategory
+          )
+          
+          return {
+            unit: unitKey,
+            symbol: unitData.symbol,
+            name: unitData.name,
+            value: resultWithUncertainty?.value || 0,
+            uncertainty: resultWithUncertainty?.uncertainty || 0,
+            formatted: resultWithUncertainty ? 
+              resultWithUncertainty.toString() :
+              'N/A'
+          }
+        })
+        
+        setConversions(newConversions)
+      } else {
+        // Standard conversion without uncertainty
+        const newConversions = targetUnits.map(([unitKey, unitData]) => {
+          const convertedValue = convertUnits(value, fromUnit, unitKey, selectedCategory)
+          return {
+            unit: unitKey,
+            symbol: unitData.symbol,
+            name: unitData.name,
+            value: convertedValue,
+            formatted: formatNumber(convertedValue)
+          }
+        })
+        
+        setConversions(newConversions)
+      }
     } catch (error) {
       console.error('Conversion error:', error)
-      setConversions([])
+      setConversions([{
+        unit: 'error',
+        symbol: '⚠️',
+        name: 'Error',
+        value: 0,
+        formatted: `Error: ${error.message}`
+      }])
     }
-  }, [inputValue, fromUnit, selectedCategory, targetSystem])
+  }, [inputValue, inputUncertainty, fromUnit, selectedCategory, targetSystem, showUncertainty])
 
   // Memoize unit calculations to prevent unnecessary re-calculations
   const sourceUnits = useMemo(() => getSourceUnits(selectedCategory), [selectedCategory, targetSystem])
@@ -186,6 +223,33 @@ function TargetSystemConverter({ targetSystem, systemInfo }) {
                   )}
                 </select>
               </div>
+            </div>
+
+            <div className="uncertainty-controls">
+              <label className="uncertainty-toggle">
+                <input
+                  type="checkbox"
+                  checked={showUncertainty}
+                  onChange={(e) => setShowUncertainty(e.target.checked)}
+                />
+                Include uncertainty/error propagation
+              </label>
+              
+              {showUncertainty && (
+                <div className="uncertainty-input">
+                  <label htmlFor="uncertainty-input">Uncertainty (±):</label>
+                  <input
+                    id="uncertainty-input"
+                    type="number"
+                    value={inputUncertainty}
+                    onChange={(e) => setInputUncertainty(e.target.value)}
+                    placeholder="Enter uncertainty"
+                    step="any"
+                    min="0"
+                    className="value-input"
+                  />
+                </div>
+              )}
             </div>
           </div>
 
