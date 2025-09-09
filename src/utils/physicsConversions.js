@@ -164,6 +164,8 @@ export const CONVERSION_FACTORS = {
     '°C': { offset: 273.15, factor: 1 },
     '°F': { offset: 255.372, factor: 5/9 },
     '°R': { offset: 0, factor: 5/9 }, // Rankine
+    'eV': { offset: 0, factor: 11604.518 }, // 1 eV = 11,604.518 K (using kB = 8.617333e-5 eV/K)
+    'Eh/kB': { offset: 0, factor: 315775.02 }, // 1 Eh/kB = 315,775.02 K (atomic temperature unit)
   }
 };
 
@@ -353,6 +355,8 @@ export const UNIT_CATEGORIES = {
       '°C': { symbol: '°C', name: 'Celsius' },
       '°F': { symbol: '°F', name: 'Fahrenheit' },
       '°R': { symbol: '°R', name: 'Rankine' },
+      'eV': { symbol: 'eV', name: 'electron volts' },
+      'Eh/kB': { symbol: 'Eh/kB', name: 'atomic temperature units' },
     }
   }
 };
@@ -477,6 +481,10 @@ export const convertUnits = (value, fromUnit, toUnit, category) => {
       kelvin = (value + 459.67) * (5/9);
     } else if (fromUnit === '°R') {
       kelvin = value * (5/9);
+    } else if (fromUnit === 'eV') {
+      kelvin = value * 11604.518; // 1 eV = 11,604.518 K
+    } else if (fromUnit === 'Eh/kB') {
+      kelvin = value * 315775.02; // 1 Eh/kB = 315,775.02 K
     } else {
       kelvin = value; // Already Kelvin
     }
@@ -488,6 +496,10 @@ export const convertUnits = (value, fromUnit, toUnit, category) => {
       return kelvin * (9/5) - 459.67;
     } else if (toUnit === '°R') {
       return kelvin * (9/5);
+    } else if (toUnit === 'eV') {
+      return kelvin / 11604.518; // K to eV
+    } else if (toUnit === 'Eh/kB') {
+      return kelvin / 315775.02; // K to atomic temperature
     } else {
       return kelvin; // Target is Kelvin
     }
@@ -503,7 +515,7 @@ export const convertUnits = (value, fromUnit, toUnit, category) => {
 // Format numbers for display
 export const formatNumber = (num) => {
   if (Math.abs(num) < 1e-15) return '0';
-  if (Math.abs(num) >= 1e6 || Math.abs(num) < 1e-3) {
+  if (Math.abs(num) >= 1e6 || Math.abs(num) < 1e-6) {
     return num.toExponential(6);
   }
   return num.toPrecision(10);
