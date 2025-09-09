@@ -1,6 +1,6 @@
 # Physics Unit Converter
 
-A modern, responsive web application for converting between SI units and atomic units for various physical quantities. Built with React and optimized for GitHub Pages deployment.
+A modern, responsive web application for converting between SI, CGS, and atomic units for various physical quantities. Built with React and optimized for GitHub Pages deployment.
 
 ## 🚀 Live Demo
 
@@ -9,27 +9,27 @@ A modern, responsive web application for converting between SI units and atomic 
 ## ✨ Features
 
 - **Multiple Physical Quantities**: Convert length, energy, mass, time, velocity, electric field, magnetic field, force, pressure, and frequency
-- **Bidirectional Conversion**: Convert from SI to atomic units or vice versa
+- **Three Unit Systems**: SI (International System), CGS (Centimeter-Gram-Second), and Atomic units
+- **Real-time Conversion**: Enter a value in any unit system and see instant conversions to the other two
 - **Responsive Design**: Works perfectly on desktop, tablet, and mobile devices
-- **Real-time Calculation**: Instant conversion as you type
 - **Scientific Notation**: Handles very large and very small numbers
-- **Educational Content**: Information about atomic units and physical constants
+- **Educational Content**: Information about different unit systems and physical constants
 - **Ad-Ready**: Prepared for monetization with Google AdSense
 
 ## 🧮 Supported Conversions
 
-| Physical Quantity | SI Unit | Atomic Unit |
-|-------------------|---------|-------------|
-| Length | meters (m) | Bohr radii (a₀) |
-| Energy | Joules (J) | Hartree (Eh) |
-| Mass | kilograms (kg) | electron masses (mₑ) |
-| Time | seconds (s) | atomic time units (ℏ/Eh) |
-| Velocity | m/s | atomic velocity units |
-| Electric Field | V/m | atomic electric field units |
-| Magnetic Field | Tesla (T) | atomic magnetic field units |
-| Force | Newton (N) | atomic force units |
-| Pressure | Pascal (Pa) | atomic pressure units |
-| Frequency | Hertz (Hz) | atomic frequency units |
+| Physical Quantity | SI Unit | CGS Unit | Atomic Unit |
+|-------------------|---------|----------|-------------|
+| Length | meters (m) | centimeters (cm) | Bohr radii (a₀) |
+| Energy | Joules (J) | ergs (erg) | Hartree (Eh) |
+| Mass | kilograms (kg) | grams (g) | electron masses (mₑ) |
+| Time | seconds (s) | seconds (s) | atomic time units (ℏ/Eh) |
+| Velocity | m/s | cm/s | atomic velocity units |
+| Electric Field | V/m | statV/cm | atomic electric field units |
+| Magnetic Field | Tesla (T) | Gauss (G) | atomic magnetic field units |
+| Force | Newton (N) | dyne (dyn) | atomic force units |
+| Pressure | Pascal (Pa) | dyne/cm² | atomic pressure units |
+| Frequency | Hertz (Hz) | Hertz (Hz) | atomic frequency units |
 
 ## 🛠️ Technology Stack
 
@@ -116,11 +116,20 @@ The website is prepared for monetization with:
 
 ## 🔬 Physics Background
 
-Atomic units are a system of natural units convenient for atomic physics and quantum chemistry. In this system:
+This converter supports three major unit systems:
 
-- **Bohr radius (a₀)** = 5.29177 × 10⁻¹¹ m
-- **Hartree energy (Eh)** = 4.35974 × 10⁻¹⁸ J
-- **Electron mass (mₑ)** = 9.10938 × 10⁻³¹ kg
+### SI Units (International System)
+The modern metric system used worldwide in science and engineering.
+
+### CGS Units (Centimeter-Gram-Second)
+A metric system commonly used in physics, especially in electromagnetic theory and astrophysics.
+
+### Atomic Units
+A system of natural units convenient for atomic physics and quantum chemistry. In this system:
+
+- **Bohr radius (a₀)** = 5.29177 × 10⁻¹¹ m = 5.29177 × 10⁻⁹ cm
+- **Hartree energy (Eh)** = 4.35974 × 10⁻¹⁸ J = 4.35974 × 10⁻¹¹ erg  
+- **Electron mass (mₑ)** = 9.10938 × 10⁻³¹ kg = 9.10938 × 10⁻²⁸ g
 - **Atomic time (ℏ/Eh)** = 2.41888 × 10⁻¹⁷ s
 
 ## 📱 Browser Support

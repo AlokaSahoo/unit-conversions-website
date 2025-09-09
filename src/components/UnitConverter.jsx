@@ -1,70 +1,84 @@
 import React, { useState } from 'react';
-import { siToAtomic, atomicToSi, UNITS, formatNumber } from '../utils/physicsConversions';
+import { siToAtomic, atomicToSi, cgsToAtomic, atomicToCgs, UNITS, formatNumber } from '../utils/physicsConversions';
 import './UnitConverter.css';
 
 const UnitConverter = ({ quantity }) => {
   const [siValue, setSiValue] = useState('');
+  const [cgsValue, setCgsValue] = useState('');
   const [atomicValue, setAtomicValue] = useState('');
-  const [direction, setDirection] = useState('siToAtomic'); // 'siToAtomic' or 'atomicToSi'
+
+  // Helper function to convert from atomic units to any system
+  const fromAtomic = (atomicVal, targetSystem) => {
+    if (targetSystem === 'si') return atomicToSi[quantity](atomicVal);
+    if (targetSystem === 'cgs') return atomicToCgs[quantity](atomicVal);
+    return atomicVal;
+  };
+
+  // Helper function to convert to atomic units from any system
+  const toAtomic = (value, sourceSystem) => {
+    if (sourceSystem === 'si') return siToAtomic[quantity](value);
+    if (sourceSystem === 'cgs') return cgsToAtomic[quantity](value);
+    return value;
+  };
+
+  const handleValueChange = (value, changedSystem) => {
+    if (value && !isNaN(value)) {
+      const atomicVal = toAtomic(parseFloat(value), changedSystem);
+      
+      // Update all other fields
+      if (changedSystem !== 'si') {
+        setSiValue(formatNumber(fromAtomic(atomicVal, 'si')));
+      }
+      if (changedSystem !== 'cgs') {
+        setCgsValue(formatNumber(fromAtomic(atomicVal, 'cgs')));
+      }
+      if (changedSystem !== 'atomic') {
+        setAtomicValue(formatNumber(atomicVal));
+      }
+    } else {
+      // Clear all other fields if input is empty
+      if (changedSystem !== 'si') setSiValue('');
+      if (changedSystem !== 'cgs') setCgsValue('');
+      if (changedSystem !== 'atomic') setAtomicValue('');
+    }
+  };
 
   const handleSiChange = (e) => {
     const value = e.target.value;
     setSiValue(value);
-    
-    if (value && !isNaN(value)) {
-      let converted;
-      if (direction === 'siToAtomic') {
-        converted = siToAtomic[quantity](parseFloat(value));
-      } else {
-        converted = atomicToSi[quantity](parseFloat(value));
-      }
-      setAtomicValue(formatNumber(converted));
-    } else {
-      setAtomicValue('');
-    }
+    handleValueChange(value, 'si');
+  };
+
+  const handleCgsChange = (e) => {
+    const value = e.target.value;
+    setCgsValue(value);
+    handleValueChange(value, 'cgs');
   };
 
   const handleAtomicChange = (e) => {
     const value = e.target.value;
     setAtomicValue(value);
-    
-    if (value && !isNaN(value)) {
-      let converted;
-      if (direction === 'siToAtomic') {
-        converted = atomicToSi[quantity](parseFloat(value));
-      } else {
-        converted = siToAtomic[quantity](parseFloat(value));
-      }
-      setSiValue(formatNumber(converted));
-    } else {
-      setSiValue('');
-    }
+    handleValueChange(value, 'atomic');
   };
 
   const clearValues = () => {
     setSiValue('');
+    setCgsValue('');
     setAtomicValue('');
   };
 
-  const swap = () => {
-    // Clear current values
-    setSiValue('');
-    setAtomicValue('');
-    // Toggle the direction (this will swap the unit labels)
-    setDirection(direction === 'siToAtomic' ? 'atomicToSi' : 'siToAtomic');
-  };
-
-  const siUnit = direction === 'siToAtomic' ? UNITS[quantity].si : UNITS[quantity].atomic;
-  const atomicUnit = direction === 'siToAtomic' ? UNITS[quantity].atomic : UNITS[quantity].si;
+  const siUnit = UNITS[quantity].si;
+  const cgsUnit = UNITS[quantity].cgs;
+  const atomicUnit = UNITS[quantity].atomic;
 
   return (
     <div className="unit-converter">
       <div className="converter-header">
         <h3>{quantity.charAt(0).toUpperCase() + quantity.slice(1)} Conversion</h3>
-        <p>Convert between SI units and atomic units</p>
+        <p>Convert between SI, CGS, and atomic units</p>
       </div>
       
-      <div className="conversion-inputs">
+      <div className="conversion-inputs-grid">
         <div className="input-group">
           <label htmlFor={`si-${quantity}`}>
             SI Unit ({siUnit.symbol})
@@ -80,13 +94,19 @@ const UnitConverter = ({ quantity }) => {
           <span className="unit-label">{siUnit.name}</span>
         </div>
 
-        <div className="converter-controls">
-          <button onClick={swap} className="swap-button" title="Swap units">
-            ⇄
-          </button>
-          <button onClick={clearValues} className="clear-button" title="Clear all">
-            Clear
-          </button>
+        <div className="input-group">
+          <label htmlFor={`cgs-${quantity}`}>
+            CGS Unit ({cgsUnit.symbol})
+          </label>
+          <input
+            id={`cgs-${quantity}`}
+            type="number"
+            value={cgsValue}
+            onChange={handleCgsChange}
+            placeholder={`Enter value in ${cgsUnit.name}`}
+            step="any"
+          />
+          <span className="unit-label">{cgsUnit.name}</span>
         </div>
 
         <div className="input-group">
@@ -105,14 +125,18 @@ const UnitConverter = ({ quantity }) => {
         </div>
       </div>
 
+      <div className="converter-controls">
+        <button onClick={clearValues} className="clear-button" title="Clear all">
+          Clear All
+        </button>
+      </div>
+
       <div className="conversion-info">
-        <p>
-          <strong>Conversion factor:</strong> 1 {siUnit.symbol} = {
-            direction === 'siToAtomic' 
-              ? formatNumber(1 / (atomicToSi[quantity](1))) 
-              : formatNumber(atomicToSi[quantity](1))
-          } {atomicUnit.symbol}
-        </p>
+        <div className="conversion-factors">
+          <p><strong>Conversion factors:</strong></p>
+          <p>1 {siUnit.symbol} = {formatNumber(1 / (atomicToSi[quantity](1)))} {atomicUnit.symbol}</p>
+          <p>1 {cgsUnit.symbol} = {formatNumber(1 / (atomicToCgs[quantity](1)))} {atomicUnit.symbol}</p>
+        </div>
       </div>
     </div>
   );

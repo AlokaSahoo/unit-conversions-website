@@ -12,7 +12,7 @@ function App() {
     <div className="app">
       <header className="app-header">
         <h1>Physics Unit Converter</h1>
-        <p>Convert between SI units and atomic units for various physical quantities</p>
+        <p>Convert between SI, CGS, and atomic units for various physical quantities</p>
       </header>
 
       <main className="app-main">
@@ -35,28 +35,37 @@ function App() {
         <UnitConverter quantity={selectedQuantity} />
 
         <div className="info-section">
-          <h2>About Atomic Units</h2>
+          <h2>About Unit Systems</h2>
           <p>
-            Atomic units are a system of natural units that are convenient for atomic physics and quantum chemistry. 
-            In this system, several fundamental physical constants are set to unity, which simplifies many equations.
+            This converter supports three major unit systems used in physics: SI (International System), 
+            CGS (Centimeter-Gram-Second), and Atomic units. Atomic units are particularly convenient 
+            for atomic physics and quantum chemistry calculations.
           </p>
           
           <div className="constants-grid">
             <div className="constant-card">
               <h3>Length</h3>
-              <p>1 Bohr radius (a₀) = 5.29 × 10⁻¹¹ m</p>
+              <p>1 Bohr radius (a₀) = 5.29 × 10⁻¹¹ m = 5.29 × 10⁻⁹ cm</p>
             </div>
             <div className="constant-card">
               <h3>Energy</h3>
-              <p>1 Hartree (Eh) = 4.36 × 10⁻¹⁸ J</p>
+              <p>1 Hartree (Eh) = 4.36 × 10⁻¹⁸ J = 4.36 × 10⁻¹¹ erg</p>
             </div>
             <div className="constant-card">
               <h3>Mass</h3>
-              <p>1 electron mass (mₑ) = 9.11 × 10⁻³¹ kg</p>
+              <p>1 electron mass (mₑ) = 9.11 × 10⁻³¹ kg = 9.11 × 10⁻²⁸ g</p>
             </div>
             <div className="constant-card">
-              <h3>Time</h3>
-              <p>1 atomic time (ℏ/Eh) = 2.42 × 10⁻¹⁷ s</p>
+              <h3>Electric Field</h3>
+              <p>SI: V/m | CGS: statV/cm | Atomic: Eh/(e·a₀)</p>
+            </div>
+            <div className="constant-card">
+              <h3>Magnetic Field</h3>
+              <p>SI: Tesla | CGS: Gauss | Atomic: ℏ/(e·a₀²)</p>
+            </div>
+            <div className="constant-card">
+              <h3>Force</h3>
+              <p>SI: Newton | CGS: dyne | Atomic: Eh/a₀</p>
             </div>
           </div>
         </div>
